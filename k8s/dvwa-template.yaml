@@ -1,0 +1,79 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dvwa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dvwa
+  template:
+    metadata:
+      labels:
+        app: dvwa
+    spec:
+      #nodeSelector:
+      #  app: dvwa
+      containers:
+        - name: dvwa
+          image: vulnerables/web-dvwa
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 100m      # CPU minimum requis
+              memory: 128Mi  # RAM minimum requise
+            limits:
+              cpu: 200m      # CPU maximum autorisé
+              memory: 256Mi  # RAM maximum autorisée
+          args:  
+          args:
+            - |
+              ln -sf /dev/stdout /var/log/apache2/access.log
+              ln -sf /dev/stderr /var/log/apache2/error.log
+              apache2ctl -D FOREGROUND
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dvwa-service
+spec:
+  selector:
+    app: dvwa
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dvwa-nodeport
+spec:
+  selector:
+    app: dvwa
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080
+  type: NodePort
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dvwa-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: dvwa.jhous.me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dvwa-service
+                port:
+                  number: 80

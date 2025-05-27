@@ -1,0 +1,74 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: juice-shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: juice-shop
+  template:
+    metadata:
+      labels:
+        app: juice-shop
+    spec:
+      #nodeSelector:
+      #  app: juice
+      containers:
+        - name: juice-shop
+          image: bkimminich/juice-shop
+          env:
+            - name: NODE_ENV
+              value: "ctf"
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 100m      # CPU minimum requis
+              memory: 128Mi  # RAM minimum requise
+            limits:
+              cpu: 200m      # CPU maximum autorisé
+              memory: 256Mi  # RAM maximum autorisée  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: juice-shop-nodeport
+spec:
+  selector:
+    app: juice-shop
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30070
+  type: NodePort
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: juice-shop-service
+spec:
+  selector:
+    app: juice-shop
+  ports:
+    - port: 3000
+      targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: juice-shop-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: juice.jhous.me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: juice-shop-service
+                port:
+                  number: 3000
