@@ -66,11 +66,6 @@ Write-Host " - Node 1 (DVWA)     : $node1"
 Write-Host " - Node 2 (JuiceShop): $node2"
 Write-Host " - Node 3 (WebGoat)  : $node3"
 
-# Appliquer les labels pour nodeSelector
-#kubectl label node $node1 dvwa=true --overwrite
-#kubectl label node $node2 juice=true --overwrite
-#kubectl label node $node3 webgoat=true --overwrite
-
 #  Vérifier Helm
 Write-Host "`n[INFO] Vérification de Helm..."
 if (-not (Get-Command helm -ErrorAction SilentlyContinue)) {
@@ -92,8 +87,7 @@ helm upgrade --install nginx-ingress ingress-nginx/ingress-nginx `
   --namespace ingress-nginx `
   --create-namespace `
   --version 4.10.1 `
-  "--set=controller.service.loadBalancerIP=$STATIC_IP" #`
-  #"--set=controller.service.loadBalancerSourceRanges[0]=197.230.162.92/32" 
+  "--set=controller.service.loadBalancerIP=$STATIC_IP" 
 
 #  Attente que le webhook soit prêt
 Write-Host "`n[INFO] Attente de 30 secondes pour l'initialisation du Webhook Ingress NGINX..."

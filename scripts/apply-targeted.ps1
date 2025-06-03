@@ -12,11 +12,9 @@ Write-Host "[INFO] Début de l'application ciblée des ressources..." -Foregroun
 
 terraform apply -auto-approve `
   -target="google_project_iam_member.gke_logging" `
-  -target="google_project_iam_member.gke_artifact_writer" `
   -target="google_project_iam_member.gke_sa_cluster_admin" `
   -target="google_project_iam_member.gke_storage_admin" `
   -target="google_project_iam_member.gke_compute_network_admin" `
-  -target="google_project_iam_member.gke_artifact_admin" `
   -target="google_project_iam_member.gke_monitoring_editor" `
   -target="google_project_iam_member.gke_serviceusage_admin" `
   -target="google_compute_network.vpc" `
@@ -29,7 +27,6 @@ terraform apply -auto-approve `
   -target="google_compute_instance.kali" `
   -target="google_container_cluster.gke" `
   -target="google_container_node_pool.primary_nodes" `
-  -target="google_artifact_registry_repository.docker_repo" `
   -target="google_monitoring_notification_channel.email_channel" `
   -target="google_monitoring_alert_policy.high_cpu_pods"
 

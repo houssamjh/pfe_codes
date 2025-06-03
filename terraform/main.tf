@@ -17,7 +17,7 @@ resource "google_compute_network" "vpc" {
 
 resource "google_compute_subnetwork" "subnet" {
   name          = "pfe-subnet"
-  ip_cidr_range = "10.10.10.0/24"
+  ip_cidr_range = "xxxxx"
   region        = var.region
   network       = google_compute_network.vpc.id
 }
@@ -51,8 +51,7 @@ resource "google_compute_firewall" "allow_kali_to_apps" {
     ports    = ["30070", "30080", "30090"]
   }
 
-  source_ranges = ["197.230.162.92/32", "10.10.10.5/32"]
-  direction     = "INGRESS"
+  source_ranges = ["xxxxx"]
   target_tags   = ["apps"]
 }
 
@@ -80,7 +79,7 @@ resource "google_compute_firewall" "allow_lb_to_apps" {
     ports    = ["80", "443"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
+  source_ranges = ["xxxxx"]
   target_tags   = ["apps"]
 }
 
@@ -96,14 +95,14 @@ resource "google_compute_instance" "kali" {
     auto_delete = true
     initialize_params {
       image = "kali-ready"
-      type  = "pd-ssd" # disque performant
+      type  = "pd-ssd"
     }
   }
 
   network_interface {
     network    = google_compute_network.vpc.name
     subnetwork = google_compute_subnetwork.subnet.name
-    network_ip = "10.10.10.5"
+    network_ip = "xxxx"
 
     access_config {}
   }
@@ -142,40 +141,6 @@ resource "google_container_node_pool" "primary_nodes" {
   initial_node_count = 3
 }
 
-
-# --------------------------------------------------------
-# Artifact Registry
-# --------------------------------------------------------
-#resource "google_artifact_registry_repository" "docker_repo" {
-#  location      = var.region
-#  repository_id = "pfe-docker-repo"
-#  format        = "DOCKER"
-#  description   = "Repository for OWASP vulnerable Docker images"
-#}
-
-# --------------------------------------------------------
-# Activer les APIs automatiquement
-# --------------------------------------------------------
-resource "google_project_service" "cloudresourcemanager" {
-  project = var.project_id
-  service = "cloudresourcemanager.googleapis.com"
-}
-
-resource "google_project_service" "compute" {
-  project = var.project_id
-  service = "compute.googleapis.com"
-}
-
-resource "google_project_service" "artifactregistry" {
-  project = var.project_id
-  service = "artifactregistry.googleapis.com"
-}
-
-resource "google_project_service" "monitoring" {
-  project = var.project_id
-  service = "monitoring.googleapis.com"
-}
-
 # --------------------------------------------------------
 # IAM Bindings
 # --------------------------------------------------------
@@ -192,13 +157,6 @@ resource "google_project_iam_member" "gke_logging" {
   role    = "roles/logging.logWriter"
   member  = format("serviceAccount:%s", var.gke_sa_email)
 }
-
-# Permet à GKE de pousser des images dans Artifact Registry
-#resource "google_project_iam_member" "gke_artifact_writer" {
-#  project = var.project_id
-#  role    = "roles/artifactregistry.writer"
-#  member = format("serviceAccount:%s", var.gke_sa_email)
-#}
 
 # Permet au cluster GKE de consulter les métriques dans Cloud Monitoring
 resource "google_project_iam_member" "gke_monitoring_viewer" {
@@ -226,13 +184,6 @@ resource "google_project_iam_member" "gke_compute_network_admin" {
   role    = "roles/compute.networkViewer"
   member  = format("serviceAccount:gke-service-account@%s.iam.gserviceaccount.com", var.project_id)
 }
-
-# Pour gérer Artifact Registry (create repository)
-#resource "google_project_iam_member" "gke_artifact_admin" {
-# project = var.project_id
-#role    = "roles/artifactregistry.admin"
-#member = format("serviceAccount:gke-service-account@%s.iam.gserviceaccount.com", var.project_id)
-#}
 
 # Pour créer les alertes / channels de monitoring
 resource "google_project_iam_member" "gke_monitoring_editor" {
@@ -339,5 +290,3 @@ resource "google_dns_record_set" "webgoat" {
   managed_zone = google_dns_managed_zone.jhous_zone.name
   rrdatas      = [google_compute_address.ingress_ip.address]
 }
-
-

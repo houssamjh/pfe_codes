@@ -14,7 +14,7 @@ output "gke_cluster_name" {
   value       = google_container_cluster.gke.name
 }
 
-# Endpoint du cluster GKE (utile pour kubectçiol)
+# Endpoint du cluster GKE 
 output "gke_endpoint" {
   description = "Adresse du endpoint API server de GKE"
   value       = google_container_cluster.gke.endpoint

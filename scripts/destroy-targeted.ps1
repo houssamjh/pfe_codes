@@ -21,11 +21,9 @@ Write-Host "`n[INFO] Début de la destruction ciblée des ressources..." -Foregr
 
 terraform destroy -auto-approve `
   -target="google_project_iam_member.gke_logging" `
-  -target="google_project_iam_member.gke_artifact_writer" `
   -target="google_project_iam_member.gke_sa_cluster_admin" `
   -target="google_project_iam_member.gke_storage_admin" `
   -target="google_project_iam_member.gke_compute_network_admin" `
-  -target="google_project_iam_member.gke_artifact_admin" `
   -target="google_project_iam_member.gke_monitoring_editor" `
   -target="google_project_iam_member.gke_serviceusage_admin" `
   -target="google_compute_network.vpc" `

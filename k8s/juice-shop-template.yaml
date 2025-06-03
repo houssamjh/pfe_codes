@@ -13,8 +13,6 @@ spec:
       labels:
         app: juice-shop
     spec:
-      #nodeSelector:
-      #  app: juice
       containers:
         - name: juice-shop
           image: bkimminich/juice-shop
@@ -25,11 +23,11 @@ spec:
             - containerPort: 3000
           resources:
             requests:
-              cpu: 100m      # CPU minimum requis
-              memory: 128Mi  # RAM minimum requise
+              cpu: 100m      
+              memory: 128Mi  
             limits:
-              cpu: 200m      # CPU maximum autorisé
-              memory: 256Mi  # RAM maximum autorisée  
+              cpu: 200m      
+              memory: 256Mi    
 ---
 apiVersion: v1
 kind: Service

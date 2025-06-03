@@ -10,13 +10,13 @@ variable "project_id" {
 variable "region" {
   description = "Région GCP à utiliser"
   type        = string
-  default     = "europe-west1"
+  default     = "europe-xxx"
 }
 
 variable "zone" {
   description = "Zone GCP à utiliser"
   type        = string
-  default     = "europe-west1-b"
+  default     = "europe-xxx"
 }
 
 variable "test_ip" {
