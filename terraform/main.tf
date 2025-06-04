@@ -122,6 +122,18 @@ resource "google_container_cluster" "gke" {
   remove_default_node_pool = true
   initial_node_count       = 1
   deletion_protection      = false
+
+  # Configuration du cluster privé
+  private_cluster_config {
+    enable_private_nodes    = true
+    enable_private_endpoint = false
+  }
+
+  # Configuration réseau pour les pods et services
+  ip_allocation_policy {
+    cluster_secondary_range_name  = "pods"
+    services_secondary_range_name = "services"
+  }
 }
 
 resource "google_container_node_pool" "primary_nodes" {
@@ -129,16 +141,19 @@ resource "google_container_node_pool" "primary_nodes" {
   cluster  = google_container_cluster.gke.name
   location = var.zone
 
+  initial_node_count = 3
+
   node_config {
     machine_type = "e2-medium"
     tags         = ["apps"]
+    
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
     ]
+    
     service_account = var.gke_sa_email
   }
 
-  initial_node_count = 3
 }
 
 # --------------------------------------------------------
@@ -185,63 +200,12 @@ resource "google_project_iam_member" "gke_compute_network_admin" {
   member  = format("serviceAccount:gke-service-account@%s.iam.gserviceaccount.com", var.project_id)
 }
 
-# Pour créer les alertes / channels de monitoring
-resource "google_project_iam_member" "gke_monitoring_editor" {
-  project = var.project_id
-  role    = "roles/monitoring.editor"
-  member  = format("serviceAccount:gke-service-account@%s.iam.gserviceaccount.com", var.project_id)
-}
-
 # Pour permettre à Terraform d’activer les APIs automatiquement
 resource "google_project_iam_member" "gke_serviceusage_admin" {
   project = var.project_id
   role    = "roles/serviceusage.serviceUsageAdmin"
   member  = format("serviceAccount:gke-service-account@%s.iam.gserviceaccount.com", var.project_id)
 }
-
-# --------------------------------------------------------
-# alerte CPU
-# --------------------------------------------------------
-resource "google_monitoring_notification_channel" "email_channel" {
-  display_name = "Alertes CPU Pods"
-  type         = "email"
-
-  labels = {
-    email_address = "houssam.jihaze@gmail.com"
-  }
-}
-
-resource "google_monitoring_alert_policy" "high_cpu_pods" {
-  display_name = "CPU élevé pour tous les pods"
-
-  combiner = "OR"
-  conditions {
-    display_name = "CPU > 80% sur tous les pods"
-    condition_threshold {
-      filter          = <<EOT
-resource.type="k8s_container"
-AND metric.type = "kubernetes.io/container/cpu/request_utilization"
-EOT
-      comparison      = "COMPARISON_GT"
-      threshold_value = 0.8
-      duration        = "60s"
-      aggregations {
-        alignment_period   = "60s"
-        per_series_aligner = "ALIGN_MEAN"
-      }
-    }
-  }
-
-  notification_channels = [google_monitoring_notification_channel.email_channel.id]
-
-  documentation {
-    content   = "Attention: un ou plusieurs pods consomment > 80% de CPU."
-    mime_type = "text/markdown"
-  }
-
-  enabled = true
-}
-
 
 # --------------------------------------------------------
 # IP statique pour Ingress
