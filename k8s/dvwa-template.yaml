@@ -4,7 +4,7 @@ kind: Deployment
 metadata:
   name: dvwa
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: dvwa
@@ -17,14 +17,7 @@ spec:
         - name: dvwa
           image: vulnerables/web-dvwa
           ports:
-            - containerPort: 80
-          resources:
-            requests:
-              cpu: 100m      
-              memory: 128Mi  
-            limits:
-              cpu: 200m      
-              memory: 256Mi  
+            - containerPort: 80 
           args:  
           args:
             - |
