@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check-terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Terraform 
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.6
+
+      - name: Initialiser Terraform (sans backend)
+        working-directory: terraform
+        run: terraform init -backend=false
+
+      - name: Validate syntax
+        working-directory: terraform
+        run: terraform validate
+
+  lint-yaml:
+    name: Lint YAML Kubernetes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name:  Installer yamllint
+        run: sudo apt-get update && sudo apt-get install -y yamllint
+
+      - name:  Vérifier les manifests YAML
+        run: yamllint k8s-manifests/
+
+  check-powershell:
+    name: Vérifier les scripts PowerShell
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name:  Test basique PowerShell (lecture syntaxique)
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path scripts -Filter *.ps1 | ForEach-Object {
+            Write-Output "Vérification de $($_.FullName)"
+            try {
+              Get-Content $_ -Raw | Out-Null
+            } catch {
+              Write-Error "Erreur de lecture du script $($_.Name)"
+            }
+          }
+
+
+  prisma-cloud:
+    name: Analyse Prisma Cloud
+    runs-on: ubuntu-latest
+    steps:
+      - name:  Checkout
+        uses: actions/checkout@v3
+
+      - name:  Prisma Cloud Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          api-key: ${{ secrets.BC_API_KEY }}
+          directory: .
+          output_format: sarif
+        env:
+          PRISMA_API_URL: https://api.prismacloud.io

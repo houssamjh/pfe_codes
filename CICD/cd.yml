@@ -1,0 +1,57 @@
+name: CD - Déploiement ou Destruction
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Action à exécuter (apply ou destroy)"
+        required: true
+        default: "apply"
+        type: choice
+        options:
+          - apply
+          - destroy
+
+jobs:
+  deploy-or-destroy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Cloner le dépôt
+        uses: actions/checkout@v3
+
+      - name: Authentification GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Installer Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.6
+
+
+      - name:  Installer gcloud CLI et plugin GKE
+        if: ${{ github.event.inputs.action == 'apply' }}
+        run: |
+          sudo apt-get install -y apt-transport-https ca-certificates gnupg
+          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list
+          sudo apt-get update
+          sudo apt-get install -y google-cloud-cli google-cloud-cli-gke-gcloud-auth-plugin
+
+      - name:  Appliquer l'infrastructure
+        if: ${{ github.event.inputs.action == 'apply' }}
+        run: ./scripts/apply-targeted.ps1
+        shell: pwsh
+
+
+      - name:  Déployer les applications Kubernetes
+        if: ${{ github.event.inputs.action == 'apply' && success() }}
+        run: ./scripts/setup-k8s-environment.ps1
+        shell: pwsh
+
+      - name:  Détruire l'infrastructure
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: ./scripts/destroy-targeted.ps1
+        shell: pwsh
